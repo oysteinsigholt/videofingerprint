@@ -20,6 +20,7 @@ function hex(buffer) {
 
 function getVideoImage(path, secs, callback) {
   var me = this, video = document.createElement('video');
+  console.log(video);
   video.onloadedmetadata = function() {
     console.log("onloadedmetadata");
     if ('function' === typeof secs) {
@@ -55,6 +56,7 @@ function getVideoImage(path, secs, callback) {
   };
   video.src = path;
   document.body.append(video);
+  console.log("Appended");
 }
 
 getVideoImage("video.mp4", 0, function(digest) {
