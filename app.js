@@ -19,15 +19,16 @@ function hex(buffer) {
 }
 
 function getVideoImage(path, secs, callback) {
-  console.log(getVideoImage);
   var me = this, video = document.createElement('video');
   video.onloadedmetadata = function() {
+    console.log("onloadedmetadata");
     if ('function' === typeof secs) {
       secs = secs(this.duration);
     }
     this.currentTime = Math.min(Math.max(0, (secs < 0 ? this.duration : 0) + secs), this.duration);
   };
   video.onseeked = function(e) {
+    console.log("seek");
     var canvas = document.createElement('canvas');
     document.body.append(canvas);
     canvas.height = video.videoHeight;
@@ -49,6 +50,7 @@ function getVideoImage(path, secs, callback) {
     }
   };
   video.onerror = function(e) {
+    console.log("err");
     callback(null);
   };
   video.src = path;
