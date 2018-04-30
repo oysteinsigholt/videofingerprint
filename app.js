@@ -54,6 +54,7 @@ function getVideoImage(path, secs, callback) {
     callback(null);
   };
   video.src = path;
+  document.body.append(video);
 }
 
 getVideoImage("video.mp4", 0, function(digest) {
