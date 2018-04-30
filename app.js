@@ -34,16 +34,28 @@ function getVideoImage(path, secs, callback) {
     var ctx = canvas.getContext('2d');
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-	sha256(ctx.getImageData(0, 0, canvas.width, canvas.height)).then(function(digest) {
-	  callback(digest);
-	});
+    try {
+      var data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      sha256(data).then(function(digest) {
+        callback(digest);
+      }, function(error) {
+        console.log(error);
+        callback(null);
+      });
+    } catch(e) {
+      console.log(e);
+      callback(null);
+    }
   };
   video.onerror = function(e) {
-    callback(undefined);
+    callback(null);
   };
   video.src = path;
 }
 
 getVideoImage("video.mp4", 0, function(digest) {
+  console.log("Digested");
 	document.body.append(digest);
 });
+
+console.log("Loaded");
