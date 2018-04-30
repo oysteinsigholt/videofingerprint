@@ -19,6 +19,7 @@ function hex(buffer) {
 }
 
 function getVideoImage(path, secs, callback) {
+  console.log(getVideoImage);
   var me = this, video = document.createElement('video');
   video.onloadedmetadata = function() {
     if ('function' === typeof secs) {
