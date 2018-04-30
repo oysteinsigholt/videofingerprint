@@ -18,7 +18,6 @@ function hex(buffer) {
   return hexCodes.join("");
 }
 $(function() {
-  console.log("loaded");
   $(".video").each(function() {
     var video = $( this ).find( "video" )[0];
     var hash = $( this ).find( "hash" )[0];
@@ -44,6 +43,9 @@ $(function() {
         hash.innerHTML = null;
       }
     };
-    video.currentTime = 0;
+    video.oncanplay = function() {
+      video.pause();
+      video.currentTime = 0;
+    };
   });
 });
