@@ -38,10 +38,11 @@ video.autoplay = true;
 
 video.onloadedmetadata = function() {
   var src = getFilename(video.src);
+  clearTimeout(timeout);
   timeout = setTimeout(function () {
     result.videos[src].errors.push("Timed out");
     nextVideo();
-  }, 1000);
+  }, 3000);
 
   var playPromise = video.play();
 
