@@ -25,16 +25,24 @@ function getFilename(str) {
 
 var step = 1;
 var index = 0;
-var videos = ["avc1.64000c.mp4", "vp8.webm", "vp9.webm"];
+var videos= ['baseline-0-9.mp4', 'baseline-1-0.mp4', 'baseline-1-1.mp4', 'baseline-1-2.mp4', 'baseline-1-3.mp4', 'baseline-2-0.mp4', 'baseline-2-1.mp4', 'baseline-2-2.mp4', 'baseline-3-0.mp4', 'baseline-3-1.mp4', 'baseline-3-2.mp4', 'baseline-4-0.mp4', 'baseline-4-1.mp4', 'baseline-4-2.mp4', 'baseline-5-0.mp4', 'baseline-5-1.mp4', 'baseline-5-2.mp4', 'baseline-6-0.mp4', 'baseline-6-1.mp4', 'baseline-6-2.mp4', 'high-0-9.mp4', 'high-1-0.mp4', 'high-1-1.mp4', 'high-1-2.mp4', 'high-1-3.mp4', 'high-2-0.mp4', 'high-2-1.mp4', 'high-2-2.mp4', 'high-3-0.mp4', 'high-3-1.mp4', 'high-3-2.mp4', 'high-4-0.mp4', 'high-4-1.mp4', 'high-4-2.mp4', 'high-5-0.mp4', 'high-5-1.mp4', 'high-5-2.mp4', 'high-6-0.mp4', 'high-6-1.mp4', 'high-6-2.mp4', 'high10-0-9.mp4', 'high10-1-0.mp4', 'high10-1-1.mp4', 'high10-1-2.mp4', 'high10-1-3.mp4', 'high10-2-0.mp4', 'high10-2-1.mp4', 'high10-2-2.mp4', 'high10-3-0.mp4', 'high10-3-1.mp4', 'high10-3-2.mp4', 'high10-4-0.mp4', 'high10-4-1.mp4', 'high10-4-2.mp4', 'high10-5-0.mp4', 'high10-5-1.mp4', 'high10-5-2.mp4', 'high10-6-0.mp4', 'high10-6-1.mp4', 'high10-6-2.mp4', 'high422-0-9.mp4', 'high422-1-0.mp4', 'high422-1-1.mp4', 'high422-1-2.mp4', 'high422-1-3.mp4', 'high422-2-0.mp4', 'high422-2-1.mp4', 'high422-2-2.mp4', 'high422-3-0.mp4', 'high422-3-1.mp4', 'high422-3-2.mp4', 'high422-4-0.mp4', 'high422-4-1.mp4', 'high422-4-2.mp4', 'high422-5-0.mp4', 'high422-5-1.mp4', 'high422-5-2.mp4', 'high422-6-0.mp4', 'high422-6-1.mp4', 'high422-6-2.mp4', 'high444-0-9.mp4', 'high444-1-0.mp4', 'high444-1-1.mp4', 'high444-1-2.mp4', 'high444-1-3.mp4', 'high444-2-0.mp4', 'high444-2-1.mp4', 'high444-2-2.mp4', 'high444-3-0.mp4', 'high444-3-1.mp4', 'high444-3-2.mp4', 'high444-4-0.mp4', 'high444-4-1.mp4', 'high444-4-2.mp4', 'high444-5-0.mp4', 'high444-5-1.mp4', 'high444-5-2.mp4', 'high444-6-0.mp4', 'high444-6-1.mp4', 'high444-6-2.mp4', 'main-0-9.mp4', 'main-1-0.mp4', 'main-1-1.mp4', 'main-1-2.mp4', 'main-1-3.mp4', 'main-2-0.mp4', 'main-2-1.mp4', 'main-2-2.mp4', 'main-3-0.mp4', 'main-3-1.mp4', 'main-3-2.mp4', 'main-4-0.mp4', 'main-4-1.mp4', 'main-4-2.mp4', 'main-5-0.mp4', 'main-5-1.mp4', 'main-5-2.mp4', 'main-6-0.mp4', 'main-6-1.mp4', 'main-6-2.mp4', 'vp8.webm', 'vp9.webm'];
 var result = {
   videos: {}
 };
+
+var timeout;
 
 var video = document.createElement('video');
 video.muted = true;
 video.autoplay = true;
 
 video.onloadedmetadata = function() {
+  var src = getFilename(video.src);
+  timeout = setTimeout(function () {
+    result.videos[src].errors.push("Timed out");
+    nextVideo();
+  }, 1000);
+
   var playPromise = video.play();
 
   if (playPromise !== undefined) {
@@ -43,8 +51,7 @@ video.onloadedmetadata = function() {
       video.currentTime = 0;
     })
     .catch(error => {
-      var src = getFilename(video.src);
-      result.videos[src].error.push(e);
+      result.videos[src].errors.push(error.toString());
     });
   } else {
     setTimeout(function() {
@@ -55,6 +62,7 @@ video.onloadedmetadata = function() {
 };
 
 video.onseeked = function(e) {
+  clearTimeout(timeout);
   var src = getFilename(video.src);
   var canvas = document.createElement('canvas');
   canvas.height = video.videoHeight;
