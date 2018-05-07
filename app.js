@@ -99,7 +99,7 @@ function nextVideo() {
       digest: null,
       errors: []
     };
-    video.src = "/video/" + videos[index];
+    video.src = "video/" + videos[index];
     index+=1;
   } else {
     setTimeout(function() {
