@@ -40,16 +40,18 @@ console.log("gethash");
   try {
     var data = ctx.getImageData(0, 0, canvas.width, canvas.height);
     sha256(data).then(function(digest) {
-      hashes.push(digest);
-	  if(digest == "0b150fd32588b1daca5569992ebe559c0102c837306b1af4c44d35128ec58366") count++;
+		if(!hashes.has(digest)) {
+			document.body.append(canvas);
+		}
+      hashes.add(digest);
 	  cb();
     }, function(error) {
-      hashes.push(error.toString());
+      //hashes.push(error.toString());
 
 	  cb();
     });
   } catch(e) {
-    hashes.push(e.toString());
+    //hashes.push(e.toString());
 	cb();
   }
 }
@@ -60,12 +62,11 @@ console.log("gethash");
       var video = document.querySelector('video');
 	  var mediaSource;
 	  var i = 0;
-	  var hashes = [];
+	  var hashes = new Set();
 	  var times = [];
 	  var assetURL = 'frag_bunny.mp4';
       var mimeCodec = 'video/mp4; codecs="avc1.42e01e, mp4a.40.2"';
-	  var count = 0;
-	  var t = performance.now();
+	  var t = 0;
 	  
 	  function fetchAB (url, cb) {
         var xhr = new XMLHttpRequest;
@@ -106,13 +107,19 @@ console.log("gethash");
 	  
 	  
 	  function updateEnd (_) {
-		times.push(performance.now()-t);
+		if(t!=0) times.push(performance.now()-t);
 		if(i < 100) {
 			getHash(setup);
 			i++;
 		} else {
-			document.body.innerHTML += "<pre>" + JSON.stringify(hashes, undefined, 2) + "</pre>";
-			document.body.innerHTML += "<pre>" + JSON.stringify(times, undefined, 2) + "</pre>";
+			var pre = document.createElement("pre");
+			pre.innerHTML = JSON.stringify(Array.from(hashes), undefined, 2);
+			document.body.appendChild(pre);
+			//document.write("<pre>" + JSON.stringify(times, undefined, 2) + "</pre>");
+			var sum = times.reduce(function(a, b) { return a + b; });
+			var avg = sum / times.length;
+
+			document.body.append(avg);
 		}
 	  }
 
