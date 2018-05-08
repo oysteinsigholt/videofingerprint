@@ -41,6 +41,7 @@ console.log("gethash");
     var data = ctx.getImageData(0, 0, canvas.width, canvas.height);
     sha256(data).then(function(digest) {
       hashes.push(digest);
+	  if(digest == "0b150fd32588b1daca5569992ebe559c0102c837306b1af4c44d35128ec58366") count++;
 	  cb();
     }, function(error) {
       hashes.push(error.toString());
@@ -64,6 +65,7 @@ console.log("gethash");
 	  var hashes = [];
 	  var assetURL = 'frag_bunny.mp4';
       var mimeCodec = 'video/mp4; codecs="avc1.42e01e, mp4a.40.2"';
+	  var count = 0;
 	  
 	  function fuzz() {
 		var buf = buffer.slice(0);
@@ -116,15 +118,16 @@ console.log("gethash");
 	  function updateEnd (_) {
 	  
 	  	if(mediaSource.duration > 0) {
-		getHash(setup);
+			getHash(setup);
 			//setup();
 		} else {
 			crashes.push(i);
-			if(crashes.length < 1) {
+			if(crashes.length < 20) {
 				setup();
 			} else {
 				document.body.innerHTML = "<pre>" + JSON.stringify(crashes, undefined, 2) + "</pre>";
 				document.body.innerHTML += "<pre>" + JSON.stringify(hashes, undefined, 2) + "</pre>";
+				document.body.innerHTML += "<pre>" + count + "</pre>";
 			}
 		}
 	  }
