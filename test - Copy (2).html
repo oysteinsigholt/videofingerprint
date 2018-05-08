@@ -59,13 +59,22 @@ console.log("gethash");
 	  var sourceBuffer;
       var video = document.querySelector('video');
 	  var mediaSource;
-	  var i = 0;
+	  var fuzzed;
+	  var i = 1000;
+	  var crashes = [];
 	  var hashes = [];
-	  var times = [];
 	  var assetURL = 'frag_bunny.mp4';
       var mimeCodec = 'video/mp4; codecs="avc1.42e01e, mp4a.40.2"';
 	  var count = 0;
-	  var t = performance.now();
+	  
+	  function fuzz() {
+		var buf = buffer.slice(0);
+		var view = new DataView(buf);
+		i+=1;
+		console.log(i);
+		view.setUint8(i, 0);
+		return buf;
+	  }
 	  
 	  function fetchAB (url, cb) {
         var xhr = new XMLHttpRequest;
@@ -92,27 +101,34 @@ console.log("gethash");
 		mediaSource.removeEventListener('sourceopen', sourceOpen);
 		sourceBuffer = mediaSource.addSourceBuffer(mimeCodec);
 	    sourceBuffer.addEventListener('updateend', updateEnd);
-		t = performance.now();
 		
 		if(buffer === null) {
 			fetchAB(assetURL, function (buf) {
 			  buffer = buf;
-			  sourceBuffer.appendBuffer(buffer);
+			  fuzzed = fuzz();
+			  sourceBuffer.appendBuffer(fuzzed);
 			});
 		} else {
-			sourceBuffer.appendBuffer(buffer);
+			fuzzed = fuzz();
+			sourceBuffer.appendBuffer(fuzzed);
 		}
       }
 	  
 	  
 	  function updateEnd (_) {
-		times.push(performance.now()-t);
-		if(i < 100) {
+	  
+	  	if(mediaSource.duration > 0) {
 			getHash(setup);
-			i++;
+			//setup();
 		} else {
-			document.body.innerHTML += "<pre>" + JSON.stringify(hashes, undefined, 2) + "</pre>";
-			document.body.innerHTML += "<pre>" + JSON.stringify(times, undefined, 2) + "</pre>";
+			crashes.push(i);
+			if(crashes.length < 20) {
+				setup();
+			} else {
+				document.body.innerHTML = "<pre>" + JSON.stringify(crashes, undefined, 2) + "</pre>";
+				document.body.innerHTML += "<pre>" + JSON.stringify(hashes, undefined, 2) + "</pre>";
+				document.body.innerHTML += "<pre>" + count + "</pre>";
+			}
 		}
 	  }
 
