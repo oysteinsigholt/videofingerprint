@@ -1,0 +1,97 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+  </head>
+  <body>
+    <video controls></video>
+	<script src=//cdnjs.cloudflare.com/ajax/libs/seedrandom/2.3.10/seedrandom.min.js></script>
+    <script>
+	  Math.seedrandom('hello.');
+	  var buffer = null;;
+	  var sourceBuffer;
+      var video = document.querySelector('video');
+	  var mediaSource;
+	  var fuzzed;
+	  var i = 0;
+	  var val = 0;
+	  var crashes = [];
+	  
+	  function fuzz() {
+		var buf = buffer.slice(0);
+		var view = new DataView(buf);
+		i++;
+		val = 0;
+		view.setUint8(i, val);
+		return buf;
+	  }
+	  
+	  function setup() {
+	        if ('MediaSource' in window && MediaSource.isTypeSupported(mimeCodec)) {
+				mediaSource = new MediaSource;
+				video.src = URL.createObjectURL(mediaSource);
+				mediaSource.addEventListener('sourceopen', sourceOpen);
+			  } else {
+				console.error('Unsupported MIME type or codec: ', mimeCodec);
+			  }
+	  }
+
+      var assetURL = 'small_movie_frag.mp4';
+      // ./mp4info frag_bunny.mp4 | grep Codec
+      var mimeCodec = 'video/mp4; codecs="avc1.64000a"';
+	  setup();
+
+
+      function sourceOpen (_) {
+		var mediaSource = this;
+		mediaSource.removeEventListener('sourceopen', sourceOpen);
+		sourceBuffer = mediaSource.addSourceBuffer(mimeCodec);
+		
+		if(buffer === null) {
+			fetchAB(assetURL, function (buf) {
+			  sourceBuffer.addEventListener('updateend', function (_) {
+				if(sourceBuffer.buffered.length == 0) {
+					try {
+						fuzzed = fuzz();
+						sourceBuffer.appendBuffer(fuzzed);
+					} catch(e) {
+						console.log("Crashed on " + i + " to " + val);
+						crashes.push([i, val]);
+						if(crashes.length < 10) {
+							setTimeout(setup, 1000);
+						} else {
+							document.body.innerHTML = "<pre>" + JSON.stringify(crashes, undefined, 2) + "</pre>";
+						}
+					}
+				} else {
+					try {
+						mediaSource.endOfStream();
+						//success();
+					} catch(e) {
+						//failure();
+					}
+					sourceBuffer.remove(0, 1000);
+				}
+				//video.play();
+			  });
+			  buffer = buf;
+			  fuzzed = buf;
+			  sourceBuffer.appendBuffer(buf);
+			});
+		  }
+      };
+
+      function fetchAB (url, cb) {
+        var xhr = new XMLHttpRequest;
+        xhr.open('get', url);
+        xhr.responseType = 'arraybuffer';
+        xhr.onload = function () {
+          cb(xhr.response);
+        };
+        xhr.send();
+      };
+    </script>
+  </body>
+</html>
+

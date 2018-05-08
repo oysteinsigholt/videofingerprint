@@ -1,0 +1,136 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+  </head>
+  <body>
+    <video controls></video>
+	<script src=//cdnjs.cloudflare.com/ajax/libs/seedrandom/2.3.10/seedrandom.min.js></script>
+    <script>
+	
+	function sha256(imageData) {
+  return crypto.subtle.digest("SHA-256", imageData.data).then(function (hash) {
+    return hex(hash);
+  });
+}
+
+function hex(buffer) {
+  var hexCodes = [];
+  var view = new DataView(buffer);
+  for (var i = 0; i < view.byteLength; i += 4) {
+    var value = view.getUint32(i)
+    var stringValue = value.toString(16)
+    var padding = '00000000'
+    var paddedValue = (padding + stringValue).slice(-padding.length)
+    hexCodes.push(paddedValue);
+  }
+
+  return hexCodes.join("");
+}
+
+function getHash(cb) {
+console.log("gethash");
+  var canvas = document.createElement('canvas');
+  canvas.height = video.videoHeight;
+  canvas.width = video.videoWidth;
+  var ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  try {
+    var data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    sha256(data).then(function(digest) {
+      hashes.push(digest);
+	  cb();
+    }, function(error) {
+      hashes.push(error.toString());
+
+	  cb();
+    });
+  } catch(e) {
+    hashes.push(e.toString());
+	cb();
+  }
+}
+	
+	  Math.seedrandom('hello.');
+	  var buffer = null;;
+	  var sourceBuffer;
+      var video = document.querySelector('video');
+	  var mediaSource;
+	  var fuzzed;
+	  var i = 1000;
+	  var crashes = [];
+	  var hashes = [];
+	  var assetURL = 'frag_bunny.mp4';
+      var mimeCodec = 'video/mp4; codecs="avc1.42e01e, mp4a.40.2"';
+	  
+	  function fuzz() {
+		var buf = buffer.slice(0);
+		var view = new DataView(buf);
+		i+=1;
+		console.log(i);
+		view.setUint8(i, 0);
+		return buf;
+	  }
+	  
+	  function fetchAB (url, cb) {
+        var xhr = new XMLHttpRequest;
+        xhr.open('get', url);
+        xhr.responseType = 'arraybuffer';
+        xhr.onload = function () {
+          cb(xhr.response);
+        };
+        xhr.send();
+      };
+	  
+	  function setup() {
+	        if ('MediaSource' in window && MediaSource.isTypeSupported(mimeCodec)) {
+				mediaSource = new MediaSource;
+				video.src = URL.createObjectURL(mediaSource);
+				mediaSource.addEventListener('sourceopen', sourceOpen);
+			  } else {
+				console.error('Unsupported MIME type or codec: ', mimeCodec);
+			  }
+	  }
+	  
+      function sourceOpen (_) {
+		var mediaSource = this;
+		mediaSource.removeEventListener('sourceopen', sourceOpen);
+		sourceBuffer = mediaSource.addSourceBuffer(mimeCodec);
+	    sourceBuffer.addEventListener('updateend', updateEnd);
+		
+		if(buffer === null) {
+			fetchAB(assetURL, function (buf) {
+			  buffer = buf;
+			  fuzzed = fuzz();
+			  sourceBuffer.appendBuffer(fuzzed);
+			});
+		} else {
+			fuzzed = fuzz();
+			sourceBuffer.appendBuffer(fuzzed);
+		}
+      }
+	  
+	  
+	  function updateEnd (_) {
+	  
+	  	if(mediaSource.duration > 0) {
+		getHash(setup);
+			//setup();
+		} else {
+			crashes.push(i);
+			if(crashes.length < 1) {
+				setup();
+			} else {
+				document.body.innerHTML = "<pre>" + JSON.stringify(crashes, undefined, 2) + "</pre>";
+				document.body.innerHTML += "<pre>" + JSON.stringify(hashes, undefined, 2) + "</pre>";
+			}
+		}
+	  }
+
+     setup();
+    </script>
+  </body>
+</html>
+
