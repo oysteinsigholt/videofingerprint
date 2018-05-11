@@ -50,7 +50,7 @@ function getHash(cb, count) {
   var data = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
     sha256(data).then(function(digest) {
-	  if(digest == "0a182a88ffcf20dcc892515a01db9af1a707814b982b9c21e1d9b3b4b203ceef" && count < 3) {
+	  if(digest == "0a182a88ffcf20dcc892515a01db9af1a707814b982b9c21e1d9b3b4b203ceef" && count < 10) {
 		setTimeout(function() { getHash(cb, count +1) }, 100);
 		return;
 	  }
