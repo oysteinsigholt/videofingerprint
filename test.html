@@ -30,9 +30,15 @@ function hex(buffer) {
   return hexCodes.join("");
 }
 
-function getHash(cb, i) {
-  if(video.videoWidth == 0 && i < 10) {
-	setTimeout(function() { getHash(cb, i+1) }, 10);
+function getHash(cb, count) {
+  if(video.error) {
+    results.push({digest: null, error: {code: video.error.code, message: video.error.message}});
+	cb();
+  }
+  
+  // wait for result
+  if(video.videoWidth == 0) {
+	setTimeout(function() { getHash(cb, count) }, 10);
 	return;
   }
   
@@ -41,24 +47,23 @@ function getHash(cb, i) {
   canvas.width = video.videoWidth;
   var ctx = canvas.getContext('2d');
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  var data = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-  try {
-    var data = ctx.getImageData(0, 0, canvas.width, canvas.height);
     sha256(data).then(function(digest) {
-	  if(digest == "0a182a88ffcf20dcc892515a01db9af1a707814b982b9c21e1d9b3b4b203ceef" && i < 10) {
-		setTimeout(function() { getHash(cb, i+1) }, 10);
+	  if(digest == "0a182a88ffcf20dcc892515a01db9af1a707814b982b9c21e1d9b3b4b203ceef" && count < 3) {
+		setTimeout(function() { getHash(cb, count +1) }, 100);
 		return;
 	  }
-      results.push(digest);
+      results.push({digest: digest, error: video.error});
+	  if(!hashes.has(digest)) {
+		hashes.add(digest);
+		document.body.appendChild(canvas);
+	  }
 	  cb();
     }, function(error) {
       results.push(error.toString());
 	  cb();
     });
-  } catch(e) {
-      results.push(e.toString());
-	cb();
-  }
 }
 	
 	  Math.seedrandom('hello.');
@@ -68,6 +73,7 @@ function getHash(cb, i) {
 	  var mediaSource;
 	  var i = 0;
 	  var results = [];
+	  var hashes = new Set();
 	  var assetURL = 'out.mp4';
       var mimeCodec = 'video/mp4; codecs="avc1.42c01e"';
 	  var size = 0;
@@ -75,7 +81,7 @@ function getHash(cb, i) {
 	  function fuzz(buffer) {
 		var buf = buffer.slice(0);
 		var bv = new BitView(buf);
-		bv.setBit(i*16, !bv.getBit(i*16));
+		bv.setBit(i*64, !bv.getBit(i*64)); //fix
 
 		return buf;
 	  }
@@ -109,7 +115,7 @@ function getHash(cb, i) {
 		if(buffer === null) {
 			fetchAB(assetURL, function (buf) {
 			  buffer = buf;
-			  size = buffer.byteLength * 8 / 16; //FIX
+			  size = buffer.byteLength * 8 / 64; //FIX
 			  sourceBuffer.appendBuffer(buffer);
 			});
 		} else {
