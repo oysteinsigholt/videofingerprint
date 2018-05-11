@@ -51,6 +51,7 @@ function getHash(cb, count) {
 
     sha256(data).then(function(digest) {
 	  if(digest == "0a182a88ffcf20dcc892515a01db9af1a707814b982b9c21e1d9b3b4b203ceef" && count < 10) {
+	    console.log("ZERO");
 		setTimeout(function() { getHash(cb, count +1) }, 100);
 		return;
 	  }
@@ -71,7 +72,7 @@ function getHash(cb, count) {
 	  var sourceBuffer;
       var video = document.querySelector('video');
 	  var mediaSource;
-	  var i = 0;
+	  var i = 110;
 	  var results = [];
 	  var hashes = new Set();
 	  var assetURL = 'out.mp4';
