@@ -1,0 +1,66 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+  </head>
+  <body>
+    <video controls></video>
+    <script>
+	  var buffer = null;;
+	  var sourceBuffer;
+      var video = document.querySelector('video');
+	  var mediaSource;
+	  var i = 110;
+	  var assetURL = 'output_frag.mp4';
+      var mimeCodec = 'video/mp4; codecs="avc1.640015"';
+	  var size = 0;
+	  
+	  
+	  function fetchAB (url, cb) {
+        var xhr = new XMLHttpRequest;
+        xhr.open('get', url);
+        xhr.responseType = 'arraybuffer';
+        xhr.onload = function () {
+          cb(xhr.response);
+        };
+        xhr.send();
+      };
+	  
+	  function setup() {
+	        if ('MediaSource' in window && MediaSource.isTypeSupported(mimeCodec)) {
+				mediaSource = new MediaSource;
+				video.src = URL.createObjectURL(mediaSource);
+				mediaSource.addEventListener('sourceopen', sourceOpen);
+			  } else {
+				console.error('Unsupported MIME type or codec: ', mimeCodec);
+			  }
+	  }
+	  
+      function sourceOpen (_) {
+		var mediaSource = this;
+		mediaSource.removeEventListener('sourceopen', sourceOpen);
+		sourceBuffer = mediaSource.addSourceBuffer(mimeCodec);
+	    sourceBuffer.addEventListener('updateend', updateEnd);
+		
+		if(buffer === null) {
+			fetchAB(assetURL, function (buf) {
+			  buffer = new Uint8Array(buf);
+			  sourceBuffer.appendBuffer(buffer);
+			});
+		} else {
+			var fuzzed = fuzz(buffer);
+			sourceBuffer.appendBuffer(fuzzed);
+		}
+      }
+	  
+	  function updateEnd (_) {
+		console.log("donw");
+		video.currentTime = 0;
+	  }
+
+     setup();
+    </script>
+  </body>
+</html>
+

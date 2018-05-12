@@ -35,11 +35,16 @@ function getHash(cb, count) {
     results.push({digest: null, error: {code: video.error.code, message: video.error.message}});
 	cb();
   }
-  
-  // wait for result
+
   if(video.videoWidth == 0) {
-	setTimeout(function() { getHash(cb, count) }, 10);
-	return;
+  	if(count < 10) {
+		setTimeout(function() { getHash(cb, count +1) }, 10);
+		return;
+	} else {
+	      results.push({digest: null, error: "size0"});
+		  cb();
+		  return;
+	}
   }
   
   var canvas = document.createElement('canvas');
@@ -50,9 +55,8 @@ function getHash(cb, count) {
   var data = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
     sha256(data).then(function(digest) {
-	  if(digest == "0a182a88ffcf20dcc892515a01db9af1a707814b982b9c21e1d9b3b4b203ceef" && count < 10) {
-	    console.log("ZERO");
-		setTimeout(function() { getHash(cb, count +1) }, 100);
+	  if(digest == "5a1c685ca6829cbbe95b235f4763b312a6e5013ecede57dfe82dad963d88d635" && count < 10) {
+		setTimeout(function() { getHash(cb, count +1) }, 10);
 		return;
 	  }
       results.push({digest: digest, error: video.error});
@@ -62,7 +66,8 @@ function getHash(cb, count) {
 	  }
 	  cb();
     }, function(error) {
-      results.push(error.toString());
+	console.log(error);
+      results.push({digest: null, error: error});
 	  cb();
     });
 }
@@ -72,17 +77,17 @@ function getHash(cb, count) {
 	  var sourceBuffer;
       var video = document.querySelector('video');
 	  var mediaSource;
-	  var i = 110;
+	  var i = 0;
 	  var results = [];
 	  var hashes = new Set();
-	  var assetURL = 'out.mp4';
-      var mimeCodec = 'video/mp4; codecs="avc1.42c01e"';
+	  var assetURL = 'output_frag.mp4';
+      var mimeCodec = 'video/mp4; codecs="avc1.640015"';
 	  var size = 0;
 	  
 	  function fuzz(buffer) {
 		var buf = buffer.slice(0);
 		var bv = new BitView(buf);
-		bv.setBit(i*64, !bv.getBit(i*64)); //fix
+		bv.setBit(i*16, !bv.getBit(i*16)); //fix
 
 		return buf;
 	  }
@@ -116,7 +121,7 @@ function getHash(cb, count) {
 		if(buffer === null) {
 			fetchAB(assetURL, function (buf) {
 			  buffer = buf;
-			  size = buffer.byteLength * 8 / 64; //FIX
+			  size = buffer.byteLength * 8 / 16; // fix
 			  sourceBuffer.appendBuffer(buffer);
 			});
 		} else {
