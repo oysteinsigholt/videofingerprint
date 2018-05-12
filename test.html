@@ -38,7 +38,7 @@ function getHash(cb, count) {
 
   if(video.videoWidth == 0) {
   	if(count < 10) {
-		setTimeout(function() { getHash(cb, count +1) }, 10);
+		setTimeout(function() { getHash(cb, count +1) }, 100);
 		return;
 	} else {
 	      results.push({digest: null, error: "size0"});
@@ -56,7 +56,7 @@ function getHash(cb, count) {
 
     sha256(data).then(function(digest) {
 	  if(digest == "5a1c685ca6829cbbe95b235f4763b312a6e5013ecede57dfe82dad963d88d635" && count < 10) {
-		setTimeout(function() { getHash(cb, count +1) }, 10);
+		setTimeout(function() { getHash(cb, count +1) }, 100);
 		return;
 	  }
       results.push({digest: digest, error: video.error});
@@ -77,7 +77,7 @@ function getHash(cb, count) {
 	  var sourceBuffer;
       var video = document.querySelector('video');
 	  var mediaSource;
-	  var i = 0;
+	  var i = 900;
 	  var results = [];
 	  var hashes = new Set();
 	  var assetURL = 'output_frag.mp4';
@@ -131,7 +131,8 @@ function getHash(cb, count) {
       }
 	  
 	  function updateEnd (_) {
-		if(i < size) {
+		//fix if(i < size) {
+		if(i < 950) {
 			getHash(setup, 0);
 			i++;
 			console.log(i + "/" + size);
