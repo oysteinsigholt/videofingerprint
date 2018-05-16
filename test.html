@@ -50,7 +50,7 @@ function getHash(cb, count) {
   }
   
   var canvas = document.createElement('canvas');
-  canvas.id = i;
+  canvas.id = ids[i-1];
   canvas.height = video.videoHeight;
   canvas.width = video.videoWidth;
   var ctx = canvas.getContext('2d');
