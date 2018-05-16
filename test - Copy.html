@@ -1,0 +1,151 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+  </head>
+  <body>
+    <video controls></video>
+	<script src="bitview.js"></script>
+	<script src=//cdnjs.cloudflare.com/ajax/libs/seedrandom/2.3.10/seedrandom.min.js></script>
+    <script>
+	
+	function sha256(imageData) {
+    return crypto.subtle.digest("SHA-256", imageData.data).then(function (hash) {
+    return hex(hash);
+  });
+}
+
+function hex(buffer) {
+  var hexCodes = [];
+  var view = new DataView(buffer);
+  for (var i = 0; i < view.byteLength; i += 4) {
+    var value = view.getUint32(i)
+    var stringValue = value.toString(16)
+    var padding = '00000000'
+    var paddedValue = (padding + stringValue).slice(-padding.length)
+    hexCodes.push(paddedValue);
+  }
+
+  return hexCodes.join("");
+}
+
+function getHash(cb, count) {
+  if(video.error) {
+    results.push({digest: null, error: {code: video.error.code, message: video.error.message}});
+	cb();
+	return;
+  }
+
+  if(video.videoWidth == 0) {
+  	if(count < 10) {
+		setTimeout(function() { getHash(cb, count +1) }, 100);
+		return;
+	} else {
+	      results.push({digest: null, error: "size0"});
+		  cb();
+		  return;
+	}
+  }
+  
+  var canvas = document.createElement('canvas');
+  canvas.id = i;
+  canvas.height = video.videoHeight;
+  canvas.width = video.videoWidth;
+  var ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  var data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+    sha256(data).then(function(digest) {
+	  if(digest == "5a1c685ca6829cbbe95b235f4763b312a6e5013ecede57dfe82dad963d88d635" && count < 10) {
+		setTimeout(function() { getHash(cb, count +1) }, 100);
+		return;
+	  }
+      results.push({digest: digest, error: video.error});
+	  if(!hashes.has(digest)) {
+		hashes.add(digest);
+		document.body.appendChild(canvas);
+	  }
+	  cb();
+    }, function(error) {
+	console.log(error);
+      results.push({digest: null, error: error});
+	  cb();
+    });
+}
+	
+	  Math.seedrandom('hello.');
+	  var buffer = null;;
+	  var sourceBuffer;
+      var video = document.querySelector('video');
+	  var mediaSource;
+	  var i = 0;
+	  var results = [];
+	  var hashes = new Set();
+	  var assetURL = 'output_frag.mp4';
+      var mimeCodec = 'video/mp4; codecs="avc1.640015"';
+	  var size = 0;
+	  
+	  function fuzz(buffer) {
+		var buf = buffer.slice(0);
+		var bv = new BitView(buf);
+		bv.setBit(i, !bv.getBit(i));
+
+		return buf;
+	  }
+	  
+	  function fetchAB (url, cb) {
+        var xhr = new XMLHttpRequest;
+        xhr.open('get', url);
+        xhr.responseType = 'arraybuffer';
+        xhr.onload = function () {
+          cb(xhr.response);
+        };
+        xhr.send();
+      };
+	  
+	  function setup() {
+	        if ('MediaSource' in window && MediaSource.isTypeSupported(mimeCodec)) {
+				mediaSource = new MediaSource;
+				video.src = URL.createObjectURL(mediaSource);
+				mediaSource.addEventListener('sourceopen', sourceOpen);
+			  } else {
+				console.error('Unsupported MIME type or codec: ', mimeCodec);
+			  }
+	  }
+	  
+      function sourceOpen (_) {
+		var mediaSource = this;
+		mediaSource.removeEventListener('sourceopen', sourceOpen);
+		sourceBuffer = mediaSource.addSourceBuffer(mimeCodec);
+	    sourceBuffer.addEventListener('updateend', updateEnd);
+		
+		if(buffer === null) {
+			fetchAB(assetURL, function (buf) {
+			  buffer = buf;
+			  size = buffer.byteLength * 8;
+			  sourceBuffer.appendBuffer(buffer);
+			});
+		} else {
+			var fuzzed = fuzz(buffer);
+			sourceBuffer.appendBuffer(fuzzed);
+		}
+      }
+	  
+	  function updateEnd (_) {
+		if(i < size) {
+			getHash(setup, 0);
+			i++;
+			console.log(i + "/" + size);
+		} else {
+			var pre = document.createElement("pre");
+			pre.innerHTML = JSON.stringify(results, undefined, 2);
+			document.body.appendChild(pre);
+		}
+	  }
+
+     setup();
+    </script>
+  </body>
+</html>
+
