@@ -58,6 +58,7 @@
       </div>
     </main>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/async/2.6.0/async.min.js"></script>
     <script src="bitview.js"></script>
     <script>
         var assetURL = 'output_frag.mp4';
@@ -68,9 +69,7 @@
       		4625,
       		4795,
       		14298,
-      		14299,
       		14319,
-      		15500,
       		14326,
       		15058];
 
@@ -109,16 +108,6 @@
         }
 
         function getHash(index, attempts = 0) {
-          if(video.error) {
-            hashes[index].push(video.error);
-            return;
-          }
-
-          if(video.videoWidth == 0) {
-            setTimeout(function() { getHash(index) }, 100);
-            return;
-          }
-
           var canvas = document.createElement('canvas');
           canvas.id = index;
           canvas.height = video.videoHeight;
@@ -128,7 +117,7 @@
           var data = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
           sha256(data).then(function(digest) {
-            if(digest == emptyHash && attempts < 10) {
+            if(digest == emptyHash && attempts < 100) {
               setTimeout(function() { getHash(index, attempts + 1) }, 100);
               return;
             }
@@ -162,6 +151,9 @@
           buffers[index] = fuzz(index);
 
           video = document.createElement('video');
+          video.addEventListener('loadeddata', function(_) {
+            getHash(index);
+          });
           video.id = index;
 
           if ('MediaSource' in window && MediaSource.isTypeSupported(mimeCodec)) {
@@ -184,15 +176,9 @@
           mediaSource.removeEventListener('sourceopen', sourceOpen);
 
           var sourceBuffer = mediaSource.addSourceBuffer(mimeCodec);
-          sourceBuffer.id = mediaSource.id;
-          sourceBuffer.addEventListener('updateend', updateEnd);
           sourceBuffer.appendBuffer(buffers[mediaSource.id]);
         }
 
-        function updateEnd (_) {
-          var mediaSource = this;
-          getHash(mediaSource.id);
-        }
 
         function getNext() {
           for(var i = 0; i < indexes.length; i++) {
