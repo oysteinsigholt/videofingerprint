@@ -77,7 +77,6 @@
         var video;
         var hashes = {};
         var startTime;
-        var mediaSource;
 
       	function sha256(imageData) {
             return crypto.subtle.digest("SHA-256", imageData.data).then(function (hash) {
@@ -127,6 +126,10 @@
           });
         }
 
+        function error(e) {
+          console.error(e);
+        }
+
         function load() {
           var xhr = new XMLHttpRequest;
           xhr.open('get', assetURL);
@@ -138,32 +141,84 @@
           xhr.send();
         }
 
-        function setup() {
-          startTime = performance.now();
-          video = document.createElement('video');
+        function process(index) {
+          if(!(index in hashes)) hashes[index] = [];
+          buffers[index] = fuzz(index);
 
+          video = document.createElement('video');
           video.addEventListener('loadeddata', function(_) {
             console.log("loadeddata");
-            setTimeout(setup, 100);
+            getHash(index);
+          });
+
+          video.addEventListener('error', function(_) {
+            console.log(video.error);
+            process(index);
           });
 
           if ('MediaSource' in window && MediaSource.isTypeSupported(mimeCodec)) {
-            mediaSource = new MediaSource;
+            var mediaSource = new MediaSource;
+            mediaSource.id = index;
             video.src = URL.createObjectURL(mediaSource);
             mediaSource.addEventListener('sourceopen', sourceOpen);
           } else {
-            console.error('Unsupported MIME type or codec: ', mimeCodec);
+            error('Unsupported MIME type or codec: ', mimeCodec);
           }
+        }
+
+        function setup() {
+          startTime = performance.now();
+          done();
         }
 
         function sourceOpen (_) {
           var mediaSource = this;
           mediaSource.removeEventListener('sourceopen', sourceOpen);
-          sourceBuffer = mediaSource.addSourceBuffer(mimeCodec);
-
-          sourceBuffer.appendBuffer(asset);
+          var sourceBuffer = mediaSource.addSourceBuffer(mimeCodec);
+          sourceBuffer.appendBuffer(buffers[mediaSource.id]);
         }
 
+        function getNext() {
+          for(var i = 0; i < indexes.length; i++) {
+            if(indexes[i] in hashes) {
+              if(hashes[indexes[i]].length < 2) return indexes[i];
+            } else {
+              return indexes[i];
+            }
+          }
+
+          return null;
+        }
+
+        function done() {
+          var next = getNext();
+          if(next === null) {
+            var time = performance.now() - startTime;
+
+            var pre = document.createElement("pre");
+            pre.innerHTML = JSON.stringify(hashes, undefined, 2);
+            document.querySelector(".hashes").appendChild(pre);
+
+            var renderer = null;
+
+            try {
+              var canvas = document.createElement('canvas');
+              var gl = canvas.getContext('webgl');
+              var debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+              renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+            } catch(e) {
+
+            }
+
+            document.querySelector("#useragent").value = navigator.userAgent;
+            document.querySelector("#renderer").value = renderer;
+            document.querySelector("#videos").value = JSON.stringify(hashes);
+            document.querySelector("#time").value = time;
+            document.querySelector(".submit").style.display = "block";
+          } else {
+            process(next);
+          }
+        }
 
         var button = document.createElement("button");
         button.setAttribute("type", "button");
