@@ -63,12 +63,12 @@
         var assetURL = 'output_frag.mp4';
         var emptyHash = "5a1c685ca6829cbbe95b235f4763b312a6e5013ecede57dfe82dad963d88d635";
         var mimeCodec = 'video/mp4; codecs="avc1.640015"';
-        var indexes = [1954, 4625,	4795,	14295, 14298, 14299, 14319];
+        var indexes = [1954, 4625,	4795,	14295, 14298, 14299, 14319, 1954, 4625,	4795,	14295, 14298, 14299, 14319];
 
         var asset;
         var buffers = {};
         var video;
-        var hashes = {};
+        var hashes = [];
         var startTime;
         var i = 0;
 
@@ -101,7 +101,7 @@
 
         function getHash(index, attempts = 0) {
           if(video.error) {
-            hashes[index] = null;
+            hashes.push([index,null]);
             return;
           }
 
@@ -123,11 +123,11 @@
               setTimeout(function() { getHash(index, attempts + 1) }, 100);
               return;
             }
-            hashes[index] = digest;
+            hashes.push([index,digest]);
             document.querySelector(".visual").appendChild(canvas);
             done();
           }, function(e) {
-            hashes[index] = e.toString();
+            hashes.push([index,e.toString()]);
             error(e);
             done();
           });
@@ -191,7 +191,7 @@
         }
 
         function done() {
-          if(Object.keys(hashes).length > indexes.length) {
+          if(hashes.length > indexes.length) {
             var time = performance.now() - startTime;
 
             var pre = document.createElement("pre");
