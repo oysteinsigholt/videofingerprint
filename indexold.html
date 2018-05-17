@@ -1,0 +1,44 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+</head>
+
+<body>
+  <body>
+
+   <nav class="navbar navbar-expand-md navbar-dark bg-dark">
+     <a class="navbar-brand" href="#">Video Hardware Experiment</a>
+   </nav>
+
+   <main role="main" class="container step-1">
+     <h1>Consent Form</h1>
+     <p>Some info here</p>
+     <div class="controls" style="display:none;">
+       <button type="button" class="btn btn-primary nextBtn" onclick="next()">I Agree</button>
+     </div>
+   </main>
+   <main role="main" class="container step-2" style="display:none;">
+     <h1>Automated data collection in progress..</h1>
+     <p>If nothing happens after about a minute or two, please refresh the page and try again.</p>
+     <div class="progress">
+      <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
+     <div class="controls" style="display:none;">
+       <button type="button" class="btn btn-primary nextBtn" onclick="next()">Next Step</button>
+     </div>
+   </main>
+   <main role="main" class="container step-3" style="display:none;">
+     <h1>Review and submit</h1>
+     <p>Some info here</p>
+     <pre class="results"></pre>
+     <div class="controls" style="display:none;">
+       <button type="button" class="btn btn-primary nextBtn" onclick="next()">Complete</button>
+     </div>
+   </main>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

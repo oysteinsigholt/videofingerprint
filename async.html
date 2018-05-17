@@ -3,15 +3,60 @@
 
 <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         canvas {
         			max-width: 144px;
         			max-height: 82px;
         		}
     </style>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
 </head>
 
 <body>
+    <main role="main" class="container">
+      <div>
+        <h1>Hardware Video Decoder Fingerprint Test Page</h1>
+        <p class="lead">Use this document as a way to quickly start any new project.<br> All you get is this text and a mostly barebones HTML document.</p>
+        <div class="controls"></div>
+        <hr>
+      </div>
+      <div class="row submit" style="display:none;">
+          <div class="col-sm">
+            <h2>Submit Fingerprint</h2>
+            <form method="post">
+              <div class="form-group">
+                <label for="cpu">CPU Model</label>
+                <input type="text" class="form-control" id="cpu" name="cpu" aria-describedby="cpuHelp" placeholder="ex. Intel Core i7-7700K">
+                <small id="cpuHelp" class="form-text text-muted">Leave blank if not applicable or unknown</small>
+              </div>
+              <div class="form-group">
+                <label for="gpu">Graphics Card Model</label>
+                <input type="text" class="form-control" id="gpu" mane="gpu" aria-describedby="gpuHelp" placeholder="ex. Nvidia GeForce GTX 1080 Ti">
+                <small id="gpuHelp" class="form-text text-muted">Leave blank if not applicable or unknown</small>
+              </div>
+              <div class="form-group">
+                <label for="model">Device Model</label>
+                <input type="text" class="form-control" id="model" name="model" aria-describedby="modelHelp" placeholder="ex. iPhone 8 Plus">
+                <small id="modelHelp" class="form-text text-muted">Leave blank if not applicable or unknown</small>
+              </div>
+              <input type="hidden" id="videos" name="videos" />
+              <input type="hidden" id="fingerprint2" name="fingerprint2" />
+              <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
+        </div>
+      </div>
+      <div class="row fingerprint"  style="display:none; padding: 16px;">
+          <div class="col-sm data border border-secondary">
+            <h2>Visual Fingerprint</h2>
+            <div class="visual"></div>
+            <h2>Hashed Fingerprint</h2>
+            <div class="hashes"></div>
+          </div>
+      </div>
+    </main>
+
+    <script src="fingerprint2.min.js"></script>
     <script src="bitview.js"></script>
     <script>
         var assetURL = 'output_frag.mp4';
@@ -78,7 +123,7 @@
               return;
             }
             hashes[index] = digest;
-            document.body.appendChild(canvas);
+            document.querySelector(".visual").appendChild(canvas);
             done();
           }, function(e) {
             hashes[index] = e.toString();
@@ -91,13 +136,13 @@
           console.error(e);
         }
 
-        function load(cb) {
+        function load() {
           var xhr = new XMLHttpRequest;
           xhr.open('get', assetURL);
           xhr.responseType = 'arraybuffer';
           xhr.onload = function () {
             asset = xhr.response;
-            cb();
+            setup();
           };
           xhr.send();
         }
@@ -151,12 +196,31 @@
 
         function done() {
           if(Object.keys(hashes).length > indexes.length) {
-            console.log(hashes);
-            console.log("Done in " + (performance.now() - startTime));
+            var time = performance.now() - startTime;
+
+            var pre = document.createElement("pre");
+            pre.innerHTML = JSON.stringify(hashes, undefined, 2);
+            document.querySelector(".hashes").appendChild(pre);
+
+            new Fingerprint2({ excludeJsFonts: true }).get(function(result, components) {
+              document.querySelector("#fingerprint2").value = JSON.stringify(components);
+              document.querySelector("#videos").value = JSON.stringify(hashes);
+              document.querySelector(".submit").style.display = "block";
+            });
           }
         }
 
-        load(setup);
+        var button = document.createElement("button");
+        button.setAttribute("type", "button");
+        button.setAttribute("class", "btn btn-primary");
+        button.innerHTML = "Collect Fingerprint";
+        button.addEventListener("click", function() {
+          button.setAttribute("disabled", "true");
+          document.querySelector(".fingerprint").style.display = "block";
+          load();
+        });
+
+        document.querySelector(".controls").appendChild(button);
     </script>
 </body>
 
