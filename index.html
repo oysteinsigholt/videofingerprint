@@ -131,7 +131,7 @@
           sha256(data).then(function(digest) {
             if(!(current in hashes)) hashes[current] = [];
 
-            if(digest != emptyHash || attempt > 3) {
+            if(digest != emptyHash || attempt > 2) {
               canvas.setAttribute("data-hash", digest);
               document.querySelector(".visual").appendChild(canvas);
               hashes[current].push(digest);
