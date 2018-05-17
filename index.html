@@ -58,7 +58,6 @@
       </div>
     </main>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/async/2.6.0/async.min.js"></script>
     <script src="bitview.js"></script>
     <script>
         var assetURL = 'output_frag.mp4';
@@ -149,6 +148,12 @@
           video = document.createElement('video');
           video.addEventListener('loadeddata', function(_) {
             getHash(index);
+          });
+
+          video.addEventListener('onerror', function(_) {
+            console.log(_);
+            hashes[index].push("eeerr");
+            done();
           });
 
           if ('MediaSource' in window && MediaSource.isTypeSupported(mimeCodec)) {
