@@ -151,9 +151,7 @@
           });
 
           video.addEventListener('error', function(_) {
-            console.log(video.error);
-            hashes[index].push(video.error);
-            done();
+            process(index);
           });
 
           if ('MediaSource' in window && MediaSource.isTypeSupported(mimeCodec)) {
