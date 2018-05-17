@@ -72,6 +72,7 @@
       		14326,
       		15058];
         var current = -1;
+        var attempt = 0;
 
         var asset;
         var video = document.createElement('video');
@@ -127,12 +128,12 @@
           var data = ctx.getImageData(0, 0, canvas.width, canvas.height);
           sha256(data).then(function(digest) {
             if(!(current in hashes)) hashes[current] = [];
-            console.log(digest);
-            //if(digest != emptyHash) {
+
+            if(digest != emptyHash || attempt > 10) {
               canvas.setAttribute("data-hash", digest);
               document.querySelector(".visual").appendChild(canvas);
               hashes[current].push(digest);
-            //}
+            }
 
             loadNext();
           });
@@ -164,7 +165,15 @@
         }
 
         function loadNext() {
+          last = current;
           current = getNext();
+          
+          if(last == current) {
+            attempt++;
+          } else {
+            attempt = 0;
+          }
+
           if(current === null) {
             var pre = document.createElement("pre");
             pre.innerHTML = JSON.stringify(hashes, undefined, 2);
