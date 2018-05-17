@@ -41,7 +41,8 @@
                 <small id="modelHelp" class="form-text text-muted">Leave blank if not applicable or unknown</small>
               </div>
               <input type="hidden" id="videos" name="videos" />
-              <input type="hidden" id="fingerprint2" name="fingerprint2" />
+              <input type="hidden" id="renderer" name="renderer" />
+              <input type="hidden" id="useragent" name="useragent" />
               <input type="hidden" id="time" name="time" />
               <button type="submit" class="btn btn-primary">Submit</button>
             </form>
@@ -57,7 +58,6 @@
       </div>
     </main>
 
-    <script src="fingerprint2.min.js"></script>
     <script src="bitview.js"></script>
     <script>
         var assetURL = 'output_frag.mp4';
@@ -203,12 +203,22 @@
             pre.innerHTML = JSON.stringify(hashes, undefined, 2);
             document.querySelector(".hashes").appendChild(pre);
 
-            new Fingerprint2({ excludeJsFonts: true }).get(function(result, components) {
-              document.querySelector("#fingerprint2").value = JSON.stringify(components);
-              document.querySelector("#videos").value = JSON.stringify(hashes);
-			  document.querySelector("#time").value = time;
-              document.querySelector(".submit").style.display = "block";
-            });
+            var renderer = null;
+
+            try {
+              var canvas = document.createElement('canvas');
+              var gl = canvas.getContext('webgl');
+              var debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+              renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+            } catch(e) {
+
+            }
+
+            document.querySelector("#useragent").value = navigator.userAgent;
+            document.querySelector("#renderer").value = renderer;
+            document.querySelector("#videos").value = JSON.stringify(hashes);
+            document.querySelector("#time").value = time;
+            document.querySelector(".submit").style.display = "block";
           }
         }
 
