@@ -76,7 +76,9 @@
 
         var asset;
         var video = document.createElement('video');
-        video.addEventListener('canplay', getHash);
+        video.addEventListener('canplay', function() {
+            setTimeout(getHash, attempt*100);
+        });
         var hashes = {};
 
       	function sha256(imageData) {
@@ -129,7 +131,7 @@
           sha256(data).then(function(digest) {
             if(!(current in hashes)) hashes[current] = [];
 
-            if(digest != emptyHash || attempt > 10) {
+            if(digest != emptyHash || attempt > 3) {
               canvas.setAttribute("data-hash", digest);
               document.querySelector(".visual").appendChild(canvas);
               hashes[current].push(digest);
@@ -167,7 +169,7 @@
         function loadNext() {
           last = current;
           current = getNext();
-          
+
           if(last == current) {
             attempt++;
           } else {
@@ -175,9 +177,7 @@
           }
 
           if(current === null) {
-            var pre = document.createElement("pre");
-            pre.innerHTML = JSON.stringify(hashes, undefined, 2);
-            document.querySelector(".hashes").appendChild(pre);
+            finish();
           } else {
             if ('MediaSource' in window && MediaSource.isTypeSupported(mimeCodec)) {
               var mediaSource = new MediaSource;
@@ -187,6 +187,31 @@
               console.error('Unsupported MIME type or codec: ', mimeCodec);
             }
           }
+        }
+
+        function finish() {
+          var time = performance.now() - startTime;
+
+          var pre = document.createElement("pre");
+          pre.innerHTML = JSON.stringify(hashes, undefined, 2);
+          document.querySelector(".hashes").appendChild(pre);
+
+          var renderer = null;
+
+          try {
+            var canvas = document.createElement('canvas');
+            var gl = canvas.getContext('webgl');
+            var debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+            renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+          } catch(e) {
+
+          }
+
+          document.querySelector("#useragent").value = navigator.userAgent;
+          document.querySelector("#renderer").value = renderer;
+          document.querySelector("#videos").value = JSON.stringify(hashes);
+          document.querySelector("#time").value = time;
+          document.querySelector(".submit").style.display = "block";
         }
 
 
