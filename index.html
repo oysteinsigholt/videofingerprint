@@ -150,7 +150,7 @@
             getHash(index);
           });
 
-          video.addEventListener('onerror', function(_) {
+          video.addEventListener('error', function(_) {
             console.log(_);
             hashes[index].push("eeerr");
             done();
