@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <style>
+        canvas {
+        			max-width: 144px;
+        			max-height: 82px;
+        		}
+    </style>
+</head>
+
+<body>
+    <script src="bitview.js"></script>
+    <script>
+        var assetURL = 'output_frag.mp4';
+        var emptyHash = "5a1c685ca6829cbbe95b235f4763b312a6e5013ecede57dfe82dad963d88d635";
+        var mimeCodec = 'video/mp4; codecs="avc1.640015"';
+        var indexes = [1954,	4625,	4795,	14295, 14298,
+        		           14299, 14319, 15500, 14326, 15058];
+
+        var asset;
+        var buffers = {};
+        var videos = {};
+        var hashes = {};
+        var startTime;
+
+      	function sha256(imageData) {
+            return crypto.subtle.digest("SHA-256", imageData.data).then(function (hash) {
+            return hex(hash);
+          });
+        }
+
+        function hex(buffer) {
+          var hexCodes = [];
+          var view = new DataView(buffer);
+          for (var i = 0; i < view.byteLength; i += 4) {
+            var value = view.getUint32(i)
+            var stringValue = value.toString(16)
+            var padding = '00000000'
+            var paddedValue = (padding + stringValue).slice(-padding.length)
+            hexCodes.push(paddedValue);
+          }
+
+          return hexCodes.join("");
+        }
+
+        function fuzz(index) {
+          var buf = asset.slice(0);
+          var bv = new BitView(buf);
+          bv.setBit(index, !bv.getBit(index));
+          return buf;
+        }
+
+        function getHash(index, attempts = 0) {
+          if(videos[index].error) {
+            hashes[index] = null;
+            return;
+          }
+
+          if(videos[index].videoWidth == 0) {
+            setTimeout(function() { getHash(index) }, 100);
+            return;
+          }
+
+          var canvas = document.createElement('canvas');
+          canvas.id = index;
+          canvas.height = videos[index].videoHeight;
+          canvas.width = videos[index].videoWidth;
+          var ctx = canvas.getContext('2d');
+          ctx.drawImage(videos[index], 0, 0, canvas.width, canvas.height);
+          var data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+          sha256(data).then(function(digest) {
+            if(digest == emptyHash && attempts < 10) {
+              setTimeout(function() { getHash(index, attempts + 1) }, 100);
+              return;
+            }
+            hashes[index] = digest;
+            document.body.appendChild(canvas);
+            done();
+          }, function(e) {
+            hashes[index] = e.toString();
+            error(e);
+            done();
+          });
+        }
+
+        function error(e) {
+          console.error(e);
+        }
+
+        function load(cb) {
+          var xhr = new XMLHttpRequest;
+          xhr.open('get', assetURL);
+          xhr.responseType = 'arraybuffer';
+          xhr.onload = function () {
+            asset = xhr.response;
+            cb();
+          };
+          xhr.send();
+        }
+
+        function process(i) {
+          var index = -1;
+          if(i != null) {
+            index = indexes[i];
+            buffers[index] = fuzz(index);
+          } else {
+              buffers[index] = asset.slice(0);
+          }
+
+          var video = document.createElement('video');
+          video.id = index;
+          videos[video.id] = video;
+
+          if ('MediaSource' in window && MediaSource.isTypeSupported(mimeCodec)) {
+            var mediaSource = new MediaSource;
+            mediaSource.id = index;
+            video.src = URL.createObjectURL(mediaSource);
+            mediaSource.addEventListener('sourceopen', sourceOpen);
+          } else {
+            error('Unsupported MIME type or codec: ', mimeCodec);
+          }
+        }
+
+        function setup() {
+          startTime = performance.now();
+          process(null);
+
+          for(var i = 0; i < indexes.length; i++) {
+            process(i);
+          }
+        }
+
+        function sourceOpen (_) {
+          var mediaSource = this;
+          mediaSource.removeEventListener('sourceopen', sourceOpen);
+
+          var sourceBuffer = mediaSource.addSourceBuffer(mimeCodec);
+          sourceBuffer.id = mediaSource.id;
+          sourceBuffer.addEventListener('updateend', updateEnd);
+          sourceBuffer.appendBuffer(buffers[mediaSource.id]);
+        }
+
+        function updateEnd (_) {
+          var mediaSource = this;
+          getHash(mediaSource.id);
+        }
+
+        function done() {
+          if(Object.keys(hashes).length > indexes.length) {
+            console.log(hashes);
+            console.log("Done in " + (performance.now() - startTime));
+          }
+        }
+
+        load(setup);
+    </script>
+</body>
+
+</html>
