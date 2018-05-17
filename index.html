@@ -107,7 +107,7 @@
           return buf;
         }
 
-        function getHash(index, attempts = 0) {
+        function getHash(index) {
           var canvas = document.createElement('canvas');
           canvas.id = index;
           canvas.height = video.videoHeight;
@@ -117,15 +117,11 @@
           var data = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
           sha256(data).then(function(digest) {
-            if(digest == emptyHash && attempts < 100) {
-              setTimeout(function() { getHash(index, attempts + 1) }, 100);
-              return;
-            }
             hashes[index].push(digest);
             document.querySelector(".visual").appendChild(canvas);
             done();
           }, function(e) {
-            hashes.push([index,e.toString()]);
+            hashes[index].push(e.toString());
             error(e);
             done();
           });
@@ -148,13 +144,12 @@
 
         function process(index) {
           if(!(index in hashes)) hashes[index] = [];
-          buffers[index] = fuzz(index);
+          if(!(index in buffers)) buffers[index] = fuzz(index);
 
           video = document.createElement('video');
           video.addEventListener('loadeddata', function(_) {
             getHash(index);
           });
-          video.id = index;
 
           if ('MediaSource' in window && MediaSource.isTypeSupported(mimeCodec)) {
             var mediaSource = new MediaSource;
@@ -172,13 +167,12 @@
         }
 
         function sourceOpen (_) {
+          console.log("sourceOpen");
           var mediaSource = this;
           mediaSource.removeEventListener('sourceopen', sourceOpen);
-
           var sourceBuffer = mediaSource.addSourceBuffer(mimeCodec);
           sourceBuffer.appendBuffer(buffers[mediaSource.id]);
         }
-
 
         function getNext() {
           for(var i = 0; i < indexes.length; i++) {
