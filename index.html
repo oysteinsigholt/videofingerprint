@@ -68,9 +68,10 @@
 
         var asset;
         var buffers = {};
-        var videos = {};
+        var video;
         var hashes = {};
         var startTime;
+        var i = 0;
 
       	function sha256(imageData) {
             return crypto.subtle.digest("SHA-256", imageData.data).then(function (hash) {
@@ -100,22 +101,22 @@
         }
 
         function getHash(index, attempts = 0) {
-          if(videos[index].error) {
+          if(video.error) {
             hashes[index] = null;
             return;
           }
 
-          if(videos[index].videoWidth == 0) {
+          if(video.videoWidth == 0) {
             setTimeout(function() { getHash(index) }, 100);
             return;
           }
 
           var canvas = document.createElement('canvas');
           canvas.id = index;
-          canvas.height = videos[index].videoHeight;
-          canvas.width = videos[index].videoWidth;
+          canvas.height = video.videoHeight;
+          canvas.width = video.videoWidth;
           var ctx = canvas.getContext('2d');
-          ctx.drawImage(videos[index], 0, 0, canvas.width, canvas.height);
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
           var data = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
           sha256(data).then(function(digest) {
@@ -157,9 +158,8 @@
               buffers[index] = asset.slice(0);
           }
 
-          var video = document.createElement('video');
+          video = document.createElement('video');
           video.id = index;
-          videos[video.id] = video;
 
           if ('MediaSource' in window && MediaSource.isTypeSupported(mimeCodec)) {
             var mediaSource = new MediaSource;
@@ -174,10 +174,6 @@
         function setup() {
           startTime = performance.now();
           process(null);
-
-          for(var i = 0; i < indexes.length; i++) {
-            process(i);
-          }
         }
 
         function sourceOpen (_) {
@@ -219,6 +215,9 @@
             document.querySelector("#videos").value = JSON.stringify(hashes);
             document.querySelector("#time").value = time;
             document.querySelector(".submit").style.display = "block";
+          } else {
+            process(i);
+            i++;
           }
         }
 
