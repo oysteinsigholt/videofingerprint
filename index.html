@@ -119,6 +119,7 @@
 
         function getHash() {
           var canvas = document.createElement('canvas');
+          canvas.id = current;
           canvas.height = video.videoHeight;
           canvas.width = video.videoWidth;
           var ctx = canvas.getContext('2d');
@@ -127,10 +128,11 @@
           sha256(data).then(function(digest) {
             if(!(current in hashes)) hashes[current] = [];
             console.log(digest);
-            if(digest != emptyHash) {
+            //if(digest != emptyHash) {
+              canvas.setAttribute("data-hash", digest);
               document.querySelector(".visual").appendChild(canvas);
               hashes[current].push(digest);
-            }
+            //}
 
             loadNext();
           });
