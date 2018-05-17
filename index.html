@@ -147,10 +147,12 @@
 
           video = document.createElement('video');
           video.addEventListener('loadeddata', function(_) {
+            console.log("loadeddata");
             getHash(index);
           });
 
           video.addEventListener('error', function(_) {
+            console.log("error");
             process(index);
           });
 
@@ -170,7 +172,6 @@
         }
 
         function sourceOpen (_) {
-          console.log("sourceOpen");
           var mediaSource = this;
           mediaSource.removeEventListener('sourceopen', sourceOpen);
           var sourceBuffer = mediaSource.addSourceBuffer(mimeCodec);
