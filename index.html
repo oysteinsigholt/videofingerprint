@@ -79,6 +79,12 @@
         video.addEventListener('canplay', function() {
             setTimeout(getHash, attempt*100);
         });
+        video.addEventListener('error', function() {
+            console.log(video.error);
+            if(!(current in hashes)) hashes[current] = [];
+            hashes[current].push("null");
+            loadNext();
+        });
         var hashes = {};
 
       	function sha256(imageData) {
